@@ -1,0 +1,15 @@
+.register-container {
+  max-width: 500px;
+  margin: auto;
+  margin-top: 150px;
+  border: 2px solid white;
+  padding: 25px;
+  border-radius: 10px;
+  background: #1e293b;
+}
+
+/* adds gap between all fields */
+.register-container input {
+  width: 80%;
+  margin-bottom: 15px;
+}
