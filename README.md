@@ -48,19 +48,22 @@ Users can register, log in, chat with AI, and view previous chat history.
 1. Create virtual environment
 
    python -m venv venv
+   
    venv\Scripts\activate
 
-2. Install dependencies
+3. Install dependencies
 
     pip install fastapi uvicorn sqlalchemy pymysql python-dotenv passlib bcrypt python-jose
 
-3. Create .env
+4. Create .env
 
    DATABASE_URL=mysql+pymysql://user:password@localhost/ai_chatbot
+   
    SECRET_KEY=your_secret_key
+   
    GROQ_API_KEY=your_ai_key
 
-4. Run server
+6. Run server
 
   uvicorn app.main:app --reload
 
@@ -73,6 +76,7 @@ http://127.0.0.1:8000
 1. Install dependencies
  
   cd frontend
+  
   npm install
 
 2.  Start app
@@ -93,7 +97,6 @@ http://localhost:5173
 
 
 **Author**
-
 Prasanna Seeram
 
 
