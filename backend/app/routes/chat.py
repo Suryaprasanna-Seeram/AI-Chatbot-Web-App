@@ -10,16 +10,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize Groq client
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Ensure API key exists
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY not found in environment variables")
+
+# Initialize Groq client safely
+client = Groq(api_key=GROQ_API_KEY)
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 @router.get("/me")
-def get_my_data(
-    current_user: User = Depends(get_current_user),
-):
+def get_my_data(current_user: User = Depends(get_current_user)):
     return {
         "message": f"Hello {current_user.username}, you are authenticated!"
     }
@@ -57,17 +60,16 @@ def chat(
 
     # 3 Send message to AI
     try:
-        print("Using Groq key:", os.getenv("GROQ_API_KEY"))
-
         response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": data.message}],
-    )
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": data.message}],
+        )
         reply_text = response.choices[0].message.content
 
     except Exception as e:
-        print("FULL AI ERROR:", str(e))
-        reply_text = f"AI error: {str(e)}"
+        reply_text = "AI service is temporarily unavailable."
+        print("AI ERROR:", str(e))  # Logs error without exposing secrets
+
     # 4 Save AI reply
     bot_msg = Message(
         conversation_id=convo.id,
@@ -81,6 +83,8 @@ def chat(
         "conversation_id": convo.id,
         "reply": reply_text
     }
+
+
 @router.get("/conversations")
 def get_conversations(
     current_user: User = Depends(get_current_user),
@@ -94,6 +98,8 @@ def get_conversations(
         {"id": c.id, "title": c.title, "created_at": c.created_at}
         for c in convos
     ]
+
+
 @router.get("/messages/{conversation_id}")
 def get_messages(
     conversation_id: int,
@@ -106,13 +112,14 @@ def get_messages(
     ).first()
 
     if not convo:
-        raise HTTPException(404, "Conversation not found")
+        raise HTTPException(status_code=404, detail="Conversation not found")
 
     msgs = db.query(Message).filter(
         Message.conversation_id == conversation_id
     ).order_by(Message.timestamp.asc()).all()
 
     return [{"role": m.role, "text": m.content} for m in msgs]
+
 
 @router.delete("/conversation/{conversation_id}")
 def delete_conversation(
@@ -129,11 +136,11 @@ def delete_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     # Delete messages first
-    db.query(Message).filter(Message.conversation_id == conversation_id).delete()
+    db.query(Message).filter(
+        Message.conversation_id == conversation_id
+    ).delete()
 
-    # Delete conversation
     db.delete(convo)
     db.commit()
 
     return {"message": "Conversation deleted"}
-
